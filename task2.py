@@ -1,4 +1,8 @@
+import logging
 from abc import ABC, abstractmethod
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+log = logging.getLogger(__name__)
 
 
 class Book:
@@ -8,7 +12,7 @@ class Book:
         self.year = year
 
     def __str__(self):
-        return f"({self.title} by {self.author} publicated ({self.year}))"
+        return f"({self.title} by {self.author} published ({self.year}))"
 
 
 class LibraryInterface(ABC):
@@ -31,27 +35,35 @@ class Library(LibraryInterface):
 
     def add_book(self, book: Book):
         self.books.append(book)
-        print("Book was added")
+        log.info("Book was added: %s", book)
 
     def remove_book(self, title: str):
+        original_count = len(self.books)
         self.books = [book for book in self.books if book.title != title]
-        print("Book removed : {title}")
-
-    def show_booksadd(self):
-        if self.books:
-            print("Library collection:")
-            for book in self.books:
-                print(book)
+        if len(self.books) < original_count:
+            log.info("Book removed: %s", title)
         else:
-            print("You don't have books.First please add any book.  ")
+            log.warning("No book found with title: %s", title)
+
+    def show_books(self):
+        if self.books:
+            log.info("Library collection:")
+            for book in self.books:
+                log.info(book)
+        else:
+            log.info("No books in the library. Please add some.")
 
 
 class LibraryManager:
-
     def __init__(self, library: LibraryInterface):
         self.library = library
 
     def add_book(self, title: str, author: str, year: int):
+        try:
+            year = int(year)
+        except ValueError:
+            log.error("Invalid year format. Please enter a number.")
+            return
         book = Book(title, author, year)
         self.library.add_book(book)
 
@@ -83,7 +95,7 @@ def main():
             case "exit":
                 break
             case _:
-                print("Invalid command. Please try again.")
+                log.warning("Invalid command. Please try again.")
 
 
 if __name__ == "__main__":
